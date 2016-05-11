@@ -41,8 +41,16 @@ except ImportError:
     else:
         raise
 
+
 version = "0.3"
 version_info = (0, 3, 0, 0)
+
+
+def datetime_unicode_converter(s):
+    if isinstance(s, str):
+        return s.decode('utf8')
+    return s
+
 
 class Connection(object):
     """A lightweight wrapper around MySQLdb DB-API connections.
@@ -66,14 +74,21 @@ class Connection(object):
 
     Arguments read_timeout and write_timeout can be passed using kwargs, if
     MySQLdb version >= 1.2.5 and MySQL version > 5.1.12.
+
+    Argument datetime_unicode can be passed using kwargs, making the column of datetime in MySQL be
+    converted into unicode in Python.
     """
     def __init__(self, host, database, user=None, password=None,
                  max_idle_time=7 * 3600, connect_timeout=0,
-                 time_zone="+8:00", charset = "utf8", sql_mode="TRADITIONAL",
+                 time_zone="+8:00", charset="utf8", sql_mode="TRADITIONAL",
                  **kwargs):
         self.host = host
         self.database = database
         self.max_idle_time = float(max_idle_time)
+
+        if 'datetime_unicode' in kwargs:
+            kwargs.pop('datetime_unicode')
+            CONVERSIONS[FIELD_TYPE.DATETIME] = datetime_unicode_converter
 
         args = dict(conv=CONVERSIONS, use_unicode=True, charset=charset,
                     db=database, init_command=('SET time_zone = "%s"' % time_zone),
@@ -224,8 +239,8 @@ class Connection(object):
         # you try to perform a query and it fails.  Protect against this
         # case by preemptively closing and reopening the connection
         # if it has been idle for too long (7 hours by default).
-        if (self._db is None or
-            (time.time() - self._last_use_time > self.max_idle_time)):
+        if self._db is None or \
+                (time.time() - self._last_use_time > self.max_idle_time):
             self.reconnect()
         self._last_use_time = time.time()
 
@@ -249,6 +264,7 @@ class Row(dict):
             return self[name]
         except KeyError:
             raise AttributeError(name)
+
 
 if MySQLdb is not None:
     # Fix the access conversions to properly recognize unicode/binary
