@@ -46,12 +46,6 @@ version = "0.3"
 version_info = (0, 3, 0, 0)
 
 
-def datetime_unicode_converter(s):
-    if isinstance(s, str):
-        return s.decode('utf8')
-    return s
-
-
 class Connection(object):
     """A lightweight wrapper around MySQLdb DB-API connections.
 
@@ -88,6 +82,11 @@ class Connection(object):
 
         if 'datetime_unicode' in kwargs:
             kwargs.pop('datetime_unicode')
+
+            def datetime_unicode_converter(s):
+                if isinstance(s, str):
+                    return s.decode(charset)
+                return s
             CONVERSIONS[FIELD_TYPE.DATETIME] = datetime_unicode_converter
 
         args = dict(conv=CONVERSIONS, use_unicode=True, charset=charset,
