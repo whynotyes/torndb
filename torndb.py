@@ -69,7 +69,7 @@ class Connection(object):
     """
     def __init__(self, host, database, user=None, password=None,
                  max_idle_time=7 * 3600, connect_timeout=0,
-                 time_zone="+0:00", charset = "utf8", sql_mode="TRADITIONAL",
+                 time_zone="+8:00", charset = "utf8", sql_mode="TRADITIONAL",
                  **kwargs):
         self.host = host
         self.database = database
